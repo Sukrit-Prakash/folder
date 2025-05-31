@@ -54,3 +54,14 @@ export async function deleteEntry(id) {
   const entries = (await getAllEntries()).filter(e => e.id !== id);
   await saveAllEntries(entries);
 }
+
+export async function selfDestruct() {
+  try {
+    // Clear all AsyncStorage data
+    await AsyncStorage.clear();
+    return true;
+  } catch (error) {
+    console.error('Self-destruct failed:', error);
+    return false;
+  }
+}

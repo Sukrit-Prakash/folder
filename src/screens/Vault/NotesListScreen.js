@@ -1,49 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, FlatList, TextInput, StyleSheet, TouchableOpacity, Alert, Text, Share } from 'react-native';
+import { View, FlatList, TextInput, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { getAllEntries } from '../../storage/vault';
 import EntryCard from '../../components/EntryCard';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { generateHTML } from '../../utils/exportToHTML';
-import RNPrint from 'react-native-print';
 import { ThemeContext } from '../../context/ThemeContext';
 
-export default function NoteListScreen({ navigation }) {
+export default function NotesListScreen({ navigation }) {
   const { theme, colors, toggle } = useContext(ThemeContext);
   const [entries, setEntries] = useState([]);
   const [query, setQuery] = useState('');
-
-  const handleExport = async () => {
-    try {
-      const all = (await getAllEntries()).filter(e => e.type === 'note');
-      const html = generateHTML('notes', all);
-      await RNPrint.print({ html });
-    } catch (err) {
-      console.error('Print failed:', err);
-      Alert.alert('Error', 'Failed to print. Please try again.');
-    }
-  };
-
-  const handleShare = async () => {
-    try {
-      const all = (await getAllEntries()).filter(e => e.type === 'note');
-      
-      // Create a text version for sharing
-      const textContent = all.map((item, idx) => {
-        const content = item.format === 'rich' 
-          ? item.content.replace(/<[^>]*>/g, '') // Remove HTML tags
-          : item.content;
-        return `${idx + 1}. ${item.title}\n${content}\n\n`;
-      }).join('');
-
-      await Share.share({
-        message: textContent,
-        title: 'My Notes'
-      });
-    } catch (err) {
-      console.error('Share failed:', err);
-      Alert.alert('Error', 'Failed to share. Please try again.');
-    }
-  };
 
   useEffect(() => {
     navigation.addListener('focus', async () => {
@@ -94,23 +59,6 @@ export default function NoteListScreen({ navigation }) {
             value={query}
             onChangeText={setQuery}
           />
-        </View>
-
-        <View style={styles.exportContainer}>
-          <TouchableOpacity 
-            style={[styles.exportButton, { backgroundColor: colors.card }]} 
-            onPress={handleShare}
-          >
-            <MaterialCommunityIcons name="share-variant" size={20} color={colors.text} />
-            <Text style={[styles.exportText, { color: colors.text }]}>Share</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.exportButton, { backgroundColor: colors.card, marginLeft: 8 }]} 
-            onPress={handleExport}
-          >
-            <MaterialCommunityIcons name="printer" size={20} color={colors.text} />
-            <Text style={[styles.exportText, { color: colors.text }]}>Print</Text>
-          </TouchableOpacity>
         </View>
 
         <FlatList
@@ -183,23 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontSize: 16,
   },
-  exportContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 16,
-  },
-  exportButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    borderRadius: 8,
-    gap: 4,
-  },
-  exportText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
   listContent: {
     paddingBottom: 16,
   },
-});
+}); 

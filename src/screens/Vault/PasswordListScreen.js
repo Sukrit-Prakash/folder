@@ -1,54 +1,261 @@
-import React, { useState, useEffect } from 'react';
-import { View, FlatList, TextInput, StyleSheet ,TouchableOpacity} from 'react-native';
-import { getAllEntries } from '../../storage/vault';
-import EntryCard from '../../components/EntryCard';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, Alert } from 'react-native';
+import { getAllEntries, deleteEntry } from '../../storage/vault';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Print } from 'react-native-print';
+import { ThemeContext } from '../../context/ThemeContext';
+import { socialIcons } from '../../utils/socialIcons';
 
 export default function PasswordListScreen({ navigation }) {
+  const { theme, colors, toggle } = useContext(ThemeContext);
   const [entries, setEntries] = useState([]);
-  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    navigation.addListener('focus', async () => {
-      const all = (await getAllEntries()).filter(e=>e.type==='password');
-      setEntries(all);
+    loadEntries();
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadEntries();
     });
+    return unsubscribe;
   }, [navigation]);
 
-  const filtered = entries.filter(e =>
-    e.title.toLowerCase().includes(query.toLowerCase()) ||
-    (e.username||'').toLowerCase().includes(query.toLowerCase())
+  const loadEntries = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllEntries();
+      setEntries(data.filter(entry => entry.type === 'password'));
+    } catch (err) {
+      setError('Failed to load passwords');
+      Alert.alert(
+        'Error',
+        'Unable to load your passwords. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    Alert.alert(
+      'Delete Entry',
+      'Are you sure you want to delete this entry?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteEntry(id);
+              await loadEntries();
+            } catch (err) {
+              Alert.alert(
+                'Error',
+                'Unable to delete the entry. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const renderItem = ({ item }) => {
+    const icon = item.icon ? socialIcons.find(icon => icon.id === item.icon) : null;
+    
+    return (
+      <TouchableOpacity 
+        style={[styles.entry, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => navigation.navigate('ViewEntry', { entry: item })}
+      >
+        <View style={styles.entryContent}>
+          <View style={styles.iconContainer}>
+            {icon ? (
+              <MaterialCommunityIcons 
+                name={icon.icon} 
+                size={32} 
+                color={icon.color} 
+              />
+            ) : (
+              <MaterialCommunityIcons 
+                name="key" 
+                size={32} 
+                color={colors.text} 
+              />
+            )}
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+              {item.title || 'Untitled'}
+            </Text>
+            {item.username && (
+              <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>
+                {item.username}
+              </Text>
+            )}
+          </View>
+        </View>
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={() => handleDelete(item.id)}
+        >
+          <MaterialCommunityIcons name="delete" size={24} color="#ff4444" />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderEmptyList = () => (
+    <View style={styles.emptyContainer}>
+      <MaterialCommunityIcons name="lock-outline" size={64} color={colors.textSecondary} />
+      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+        {loading ? 'Loading passwords...' : 
+         error ? 'Failed to load passwords' :
+         'No passwords saved yet'}
+      </Text>
+    </View>
   );
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Home')}>
-        <MaterialCommunityIcons name="arrow-left" size={28} color="#ff4444" />
-      </TouchableOpacity>
-      <TextInput
-        placeholder="Search..."
-        style={styles.search}
-        value={query}
-        onChangeText={setQuery}
-      />
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialCommunityIcons name="arrow-left" size={28} color="#ff4444" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Passwords</Text>
+        </View>
+        <TouchableOpacity onPress={toggle}>
+          <MaterialCommunityIcons 
+            name={theme === 'light' ? 'weather-night' : 'weather-sunny'} 
+            size={28} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
+      </View>
+
       <FlatList
-        data={filtered}
+        data={entries}
+        renderItem={renderItem}
         keyExtractor={item => item.id}
-        renderItem={({item}) => (
-          <EntryCard entry={item} onPress={e => navigation.navigate('ViewEntry', { entry: e })}/>
-        )}
+        contentContainerStyle={[
+          styles.list,
+          entries.length === 0 && styles.emptyList
+        ]}
+        ListEmptyComponent={renderEmptyList}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
       />
+
+      <TouchableOpacity 
+        style={[styles.addButton, { backgroundColor: '#ff4444' }]}
+        onPress={() => navigation.navigate('AddPassword')}
+      >
+        <MaterialCommunityIcons name="plus" size={32} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:{flex:1, padding:10},
-  search:{padding:8, borderWidth:1, borderRadius:6, marginBottom:10},
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   backButton: {
-    marginTop: 20,
-    marginRight: 16,
     padding: 4,
+    marginRight: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  list: {
+    padding: 16,
+  },
+  emptyList: {
+    flex: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  entry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  entryContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  username: {
+    fontSize: 14,
+  },
+  deleteButton: {
+    padding: 8,
+  },
+  addButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
 });

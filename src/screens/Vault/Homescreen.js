@@ -42,6 +42,11 @@ export default function HomeScreen({ navigation }) {
                     onPress={() => navigation.navigate('Vault')}
                 />
                 <MenuButton 
+                    icon="history" 
+                    title="Activity Log" 
+                    onPress={() => navigation.navigate('ActivityLog')}
+                />
+                <MenuButton 
                     icon={theme === 'light' ? 'weather-night' : 'weather-sunny'} 
                     title={`${theme === 'light' ? 'Dark' : 'Light'} Mode`} 
                     onPress={toggle}
