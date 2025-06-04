@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Platform } from 'react-native';
 import { ThemeContext } from '../../context/ThemeContext';
 import { AuthContext } from '../../context/AuthContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -66,6 +66,43 @@ export default function HomeScreen({ navigation }) {
                     <Text style={[styles.statLabel, { color: colors.text }]}>Your data is encrypted</Text>
                 </View>
             </View>
+
+            
+
+            <View style={[styles.infoSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.infoHeader}>
+                    <MaterialCommunityIcons name="shield-check" size={24} color="#00ff00" />
+                    <Text style={[styles.infoTitle, { color: colors.text }]}>Why Use This App?</Text>
+                </View>
+                <View style={styles.infoContent}>
+                    <View style={styles.infoItem}>
+                        <MaterialCommunityIcons name="lock-check" size={20} color={colors.text} />
+                        <Text style={[styles.infoText, { color: colors.text }]}>
+                            Store passwords securely with end-to-end encryption
+                        </Text>
+                    </View>
+                    <View style={styles.infoItem}>
+                        <MaterialCommunityIcons name="wifi-off" size={20} color={colors.text} />
+                        <Text style={[styles.infoText, { color: colors.text }]}>
+                            Works completely offline - no internet required
+                        </Text>
+                    </View>
+                    <View style={styles.infoItem}>
+                        <MaterialCommunityIcons name="key-variant" size={20} color={colors.text} />
+                        <Text style={[styles.infoText, { color: colors.text }]}>
+                            Generate strong, unique passwords for each account
+                        </Text>
+                    </View>
+                    <View style={styles.infoItem}>
+                        <MaterialCommunityIcons name="eye-off" size={20} color={colors.text} />
+                        <Text style={[styles.infoText, { color: colors.text }]}>
+                            Your data never leaves your device
+                        </Text>
+                    </View>
+                </View>
+            </View>
+
+
         </ScrollView>
     );
 }
@@ -76,7 +113,7 @@ const styles = StyleSheet.create({
     },
     header: {
         padding: 20,
-        paddingTop: 40,
+        paddingTop: Platform.OS === 'ios' ? 60 : 40,
     },
     title: {
         fontSize: 28,
@@ -111,8 +148,38 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         textAlign: 'center',
     },
+    infoSection: {
+        margin: 20,
+        padding: 20,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    infoHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    infoTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    infoContent: {
+        gap: 12,
+    },
+    infoItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    infoText: {
+        fontSize: 14,
+        flex: 1,
+        lineHeight: 20,
+    },
     statsContainer: {
         padding: 20,
+        marginTop: 'auto',
     },
     statCard: {
         padding: 20,

@@ -3,7 +3,7 @@ import { View, StyleSheet, Alert, TouchableOpacity, Text, ScrollView, KeyboardAv
 import uuid from 'react-native-uuid';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
-import { addEntry } from '../../storage/vault';
+import { addEntry, updateEntry } from '../../storage/vault';
 import PasswordGenerator from '../../components/PasswordGenerator';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -23,7 +23,8 @@ export default function AddPasswordScreen({ navigation, route }) {
     if(!password){
       return Alert.alert('Error', 'Password required');
     }
-    await addEntry({
+    
+    const entryData = {
       id: route.params?.entry?.id || uuid.v4(),
       type: 'password',
       title: title || (selectedIcon ? socialIcons.find(icon => icon.id === selectedIcon)?.name : ''),
@@ -31,7 +32,15 @@ export default function AddPasswordScreen({ navigation, route }) {
       password, 
       url,
       icon: selectedIcon
-    });
+    };
+
+    if (route.params?.entry) {
+      // If we have an existing entry, update it
+      await updateEntry(entryData);
+    } else {
+      // If it's a new entry, add it
+      await addEntry(entryData);
+    }
     navigation.goBack();
   };
 
@@ -53,7 +62,7 @@ export default function AddPasswordScreen({ navigation, route }) {
           <ScrollView style={styles.iconGrid}>
             {socialIcons.map((icon) => (
               <TouchableOpacity
-                key={icon.id}
+                key={`icon-${icon.id}`}
                 style={[
                   styles.iconItem,
                   { backgroundColor: colors.card, borderColor: colors.border },

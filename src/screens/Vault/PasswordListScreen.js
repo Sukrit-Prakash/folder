@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, Alert, TextInput, Share } from 'react-native';
 import { getAllEntries, deleteEntry } from '../../storage/vault';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -8,6 +8,8 @@ import { socialIcons } from '../../utils/socialIcons';
 export default function PasswordListScreen({ navigation }) {
   const { theme, colors, toggle } = useContext(ThemeContext);
   const [entries, setEntries] = useState([]);
+  const [filteredEntries, setFilteredEntries] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -19,12 +21,36 @@ export default function PasswordListScreen({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
+  useEffect(() => {
+    // Filter entries based on search query
+    if (searchQuery.trim() === '') {
+      setFilteredEntries(entries);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = entries.filter(entry => 
+        entry.title?.toLowerCase().includes(query) ||
+        entry.username?.toLowerCase().includes(query) ||
+        entry.url?.toLowerCase().includes(query)
+      );
+      setFilteredEntries(filtered);
+    }
+  }, [searchQuery, entries]);
+
   const loadEntries = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await getAllEntries();
-      setEntries(data.filter(entry => entry.type === 'password'));
+      // Remove duplicates by using a Map with ID as key
+      const uniqueEntries = Array.from(
+        new Map(
+          data
+            .filter(entry => entry.type === 'password')
+            .map(entry => [entry.id, entry])
+        ).values()
+      );
+      setEntries(uniqueEntries);
+      setFilteredEntries(uniqueEntries);
     } catch (err) {
       setError('Failed to load passwords');
       Alert.alert(
@@ -63,6 +89,23 @@ export default function PasswordListScreen({ navigation }) {
     );
   };
 
+  const handleShare = async (item) => {
+    try {
+      const shareContent = `Title: ${item.title}\nUsername: ${item.username}\nPassword: ${item.password}${item.url ? `\nURL: ${item.url}` : ''}`;
+      
+      await Share.share({
+        message: shareContent,
+        title: 'Share Password Details'
+      });
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Unable to share the password details.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   const renderItem = ({ item }) => {
     const icon = item.icon ? socialIcons.find(icon => icon.id === item.icon) : null;
     
@@ -98,12 +141,20 @@ export default function PasswordListScreen({ navigation }) {
             )}
           </View>
         </View>
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={() => handleDelete(item.id)}
-        >
-          <MaterialCommunityIcons name="delete" size={24} color="#ff4444" />
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => handleShare(item)}
+          >
+            <MaterialCommunityIcons name="share-variant" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => handleDelete(item.id)}
+          >
+            <MaterialCommunityIcons name="delete" size={24} color="#ff4444" />
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -140,13 +191,29 @@ export default function PasswordListScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <MaterialCommunityIcons name="magnify" size={24} color={colors.textSecondary} />
+        <TextInput
+          style={[styles.searchInput, { color: colors.text }]}
+          placeholder="Search passwords..."
+          placeholderTextColor={colors.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery ? (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
       <FlatList
-        data={entries}
+        data={filteredEntries}
         renderItem={renderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => `${item.id}-${item.timestamp || Date.now()}`}
         contentContainerStyle={[
           styles.list,
-          entries.length === 0 && styles.emptyList
+          filteredEntries.length === 0 && styles.emptyList
         ]}
         ListEmptyComponent={renderEmptyList}
         removeClippedSubviews={true}
@@ -240,6 +307,14 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 14,
   },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
   deleteButton: {
     padding: 8,
   },
@@ -257,5 +332,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+    padding: 8,
   },
 });

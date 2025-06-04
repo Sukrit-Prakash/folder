@@ -11,6 +11,7 @@ export default function ViewEntryScreen({ route, navigation }) {
     const { entry } = route.params;
     const { theme, colors, toggle } = useContext(ThemeContext);
     const [copyFeedback, setCopyFeedback] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     
     useEffect(() => {
         // Log the activity when viewing an entry
@@ -74,9 +75,23 @@ export default function ViewEntryScreen({ route, navigation }) {
                     activeOpacity={0.7}
                 >
                     <Text style={[styles.value, isLink && styles.link, { color: colors.text }]}>
-                        {label === 'Password' ? '••••••••' : value}
+                        {label === 'Password' ? (showPassword ? value : '••••••••') : value}
                     </Text>
-                    <MaterialCommunityIcons name="content-copy" size={20} color={colors.text} />
+                    <View style={styles.fieldActions}>
+                        {label === 'Password' && (
+                            <TouchableOpacity 
+                                onPress={() => setShowPassword(!showPassword)}
+                                style={styles.visibilityButton}
+                            >
+                                <MaterialCommunityIcons 
+                                    name={showPassword ? 'eye-off' : 'eye'} 
+                                    size={20} 
+                                    color={colors.text} 
+                                />
+                            </TouchableOpacity>
+                        )}
+                        <MaterialCommunityIcons name="content-copy" size={20} color={colors.text} />
+                    </View>
                 </TouchableOpacity>
             ) : (
                 <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
@@ -291,5 +306,13 @@ const styles = StyleSheet.create({
     feedbackText: {
         fontSize: 14,
         fontWeight: '600',
+    },
+    fieldActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    visibilityButton: {
+        padding: 4,
     },
 });

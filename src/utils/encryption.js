@@ -8,24 +8,34 @@ const SECRET_KEY = 'super-secret-key';
 export function encrypt(text) {
     try {
         if (!text) {
-            throw new Error('Text to encrypt cannot be empty');
+            console.warn('Attempted to encrypt empty text');
+            return '';
         }
-        return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+        const encrypted = CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+        if (!encrypted) {
+            throw new Error('Encryption produced empty result');
+        }
+        return encrypted;
     } catch (error) {
         console.error('Encryption error:', error);
-        throw error;
+        return ''; // Return empty string instead of throwing
     }
 }
 
 export function decrypt(ciphertext) {
     try {
         if (!ciphertext) {
-            throw new Error('Ciphertext cannot be empty');
+            console.warn('Attempted to decrypt empty ciphertext');
+            return '';
         }
         const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
-        return bytes.toString(CryptoJS.enc.Utf8);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+        if (!decrypted) {
+            throw new Error('Decryption produced empty result');
+        }
+        return decrypted;
     } catch (error) {
         console.error('Decryption error:', error);
-        throw error;
+        return ''; // Return empty string instead of throwing
     }
 }

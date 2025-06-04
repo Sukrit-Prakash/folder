@@ -12,24 +12,34 @@ export default function LoginScreen() {
   const navigation = useNavigation();
   const [pin, setPin] = useState('');
   const { login, incorrectAttempts, MAX_ATTEMPTS } = useContext(AuthContext);
-  const [scanAnimation] = useState(new Animated.Value(0));
+  const [pulseAnimation] = useState(new Animated.Value(0));
+  const [rotateAnimation] = useState(new Animated.Value(0));
   const [securityLevel] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    // Start scanning animation
+    // Start pulsing animation
     Animated.loop(
       Animated.sequence([
-        Animated.timing(scanAnimation, {
+        Animated.timing(pulseAnimation, {
           toValue: 1,
-          duration: 2000,
+          duration: 1500,
           useNativeDriver: true,
         }),
-        Animated.timing(scanAnimation, {
+        Animated.timing(pulseAnimation, {
           toValue: 0,
-          duration: 2000,
+          duration: 1500,
           useNativeDriver: true,
         }),
       ])
+    ).start();
+
+    // Start rotating animation
+    Animated.loop(
+      Animated.timing(rotateAnimation, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: true,
+      })
     ).start();
 
     // Animate security level based on attempts
@@ -42,7 +52,7 @@ export default function LoginScreen() {
 
   const handle = async () => {
     if (!(await login(pin))) {
-      const remainingAttempts = MAX_ATTEMPTS - incorrectAttempts;
+      const remainingAttempts = MAX_ATTEMPTS - incorrectAttempts - 1;
       if (remainingAttempts > 0) {
         Alert.alert(
           'Error',
@@ -51,18 +61,31 @@ export default function LoginScreen() {
       } else {
         Alert.alert(
           'Security Alert',
-          'Too many incorrect attempts. All data has been cleared for security.',
+          'Too many incorrect attempts. The app will now self-destruct and clear all data for security.',
           [{ text: 'OK', onPress: () => navigation.navigate('Setup') }]
         );
       }
     }
   };
 
-  const scanLineStyle = {
+  const pulseStyle = {
     transform: [{
-      translateY: scanAnimation.interpolate({
+      scale: pulseAnimation.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, 200]
+        outputRange: [1, 1.2]
+      })
+    }],
+    opacity: pulseAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.5, 1]
+    })
+  };
+
+  const rotateStyle = {
+    transform: [{
+      rotate: rotateAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg']
       })
     }]
   };
@@ -77,13 +100,16 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.securityContainer}>
-        <MaterialCommunityIcons name="shield-lock" size={60} color="#00ff00" />
+        <View style={styles.shieldContainer}>
+          <Animated.View style={[styles.rotatingRing, rotateStyle]}>
+            <MaterialCommunityIcons name="shield-check" size={80} color="#00ff00" />
+          </Animated.View>
+          <Animated.View style={[styles.shield, pulseStyle]}>
+            <MaterialCommunityIcons name="shield-lock" size={60} color="#00ff00" />
+          </Animated.View>
+        </View>
         <Text style={styles.title}>SECURE ACCESS</Text>
         <Text style={styles.subtitle}>Enter Master PIN</Text>
-        
-        <View style={styles.scannerContainer}>
-          <Animated.View style={[styles.scanLine, scanLineStyle]} />
-        </View>
 
         <View style={styles.securityBarContainer}>
           <Animated.View style={[styles.securityBar, securityBarStyle]} />
@@ -110,7 +136,7 @@ export default function LoginScreen() {
         <View style={styles.warningContainer}>
           <MaterialCommunityIcons name="alert-circle" size={20} color="#ff4444" />
           <Text style={styles.warning}>
-            {MAX_ATTEMPTS - incorrectAttempts} {incorrectAttempts === 1 ? 'attempt' : 'attempts'} remaining
+            {MAX_ATTEMPTS - incorrectAttempts} {MAX_ATTEMPTS - incorrectAttempts === 1 ? 'attempt' : 'attempts'} remaining
           </Text>
         </View>
       )}
@@ -128,6 +154,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 40,
   },
+  shieldContainer: {
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  shield: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rotatingRing: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#00ff00',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -140,22 +188,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 10,
     letterSpacing: 1,
-  },
-  scannerContainer: {
-    width: width - 40,
-    height: 200,
-    borderWidth: 2,
-    borderColor: '#00ff00',
-    marginTop: 30,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  scanLine: {
-    position: 'absolute',
-    width: '100%',
-    height: 2,
-    backgroundColor: '#00ff00',
-    opacity: 0.5,
   },
   securityBarContainer: {
     width: width - 40,

@@ -12,18 +12,18 @@ export const socialIcons = [
     { id: 'reddit', name: 'Reddit', icon: 'reddit', color: '#FF4500' },
     { id: 'spotify', name: 'Spotify', icon: 'spotify', color: '#1DB954' },
     { id: 'discord', name: 'Discord', icon: 'discord', color: '#5865F2' },
-    { id: 'telegram', name: 'Telegram', icon: 'telegram', color: '#26A5E4' },
+    // { id: 'telegram', name: 'Telegram', icon: 'telegram', color: '#26A5E4' },
     { id: 'snapchat', name: 'Snapchat', icon: 'snapchat', color: '#FFFC00' },
-    { id: 'tumblr', name: 'Tumblr', icon: 'tumblr', color: '#36465D' },
+    // { id: 'tumblr', name: 'Tumblr', icon: 'tumblr', color: '#36465D' },
     { id: 'github', name: 'GitHub', icon: 'github', color: '#181717' },
     { id: 'google', name: 'Google', icon: 'google', color: '#4285F4' },
     { id: 'microsoft', name: 'Microsoft', icon: 'microsoft', color: '#0078D4' },
     { id: 'apple', name: 'Apple', icon: 'apple', color: '#000000' },
-    { id: 'amazon', name: 'Amazon', icon: 'amazon', color: '#FF9900' },
+    // { id: 'amazon', name: 'Amazon', icon: 'amazon', color: '#FF9900' },
     { id: 'netflix', name: 'Netflix', icon: 'netflix', color: '#E50914' },
-    { id: 'paypal', name: 'PayPal', icon: 'paypal', color: '#003087' },
+    // { id: 'paypal', name: 'PayPal', icon: 'paypal', color: '#003087' },
     { id: 'dropbox', name: 'Dropbox', icon: 'dropbox', color: '#0061FF' },
     { id: 'slack', name: 'Slack', icon: 'slack', color: '#4A154B' },
     { id: 'twitch', name: 'Twitch', icon: 'twitch', color: '#9146FF' },
-    { id: 'medium', name: 'Medium', icon: 'medium', color: '#000000' }
+    // { id: 'medium', name: 'Medium', icon: 'medium', color: '#000000' }
 ]; 

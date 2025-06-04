@@ -5,59 +5,125 @@ const MASTER_PIN_KEY = 'MASTER_PIN';
 const ENTRIES_KEY     = 'VAULT_ENTRIES';
 
 export async function setMasterPin(pin) {
-  const cipher = encrypt(pin);
-  await AsyncStorage.setItem(MASTER_PIN_KEY, cipher);
+  try {
+    if (!pin) {
+      console.warn('Attempted to set empty master PIN');
+      return false;
+    }
+    const cipher = encrypt(pin);
+    await AsyncStorage.setItem(MASTER_PIN_KEY, cipher);
+    return true;
+  } catch (error) {
+    console.error('Error setting master PIN:', error);
+    return false;
+  }
 }
 
 export async function checkMasterPin(pin) {
-  const cipher = await AsyncStorage.getItem(MASTER_PIN_KEY);
-  if (!cipher) return false;
-  return decrypt(cipher) === pin;
+  try {
+    if (!pin) {
+      console.warn('Attempted to check empty master PIN');
+      return false;
+    }
+    const cipher = await AsyncStorage.getItem(MASTER_PIN_KEY);
+    if (!cipher) return false;
+    const decrypted = decrypt(cipher);
+    return decrypted === pin;
+  } catch (error) {
+    console.error('Error checking master PIN:', error);
+    return false;
+  }
 }
 
 export async function hasMasterPin() {
-  return (await AsyncStorage.getItem(MASTER_PIN_KEY)) !== null;
+  try {
+    const cipher = await AsyncStorage.getItem(MASTER_PIN_KEY);
+    return cipher !== null;
+  } catch (error) {
+    console.error('Error checking if master PIN exists:', error);
+    return false;
+  }
 }
 
 export async function getAllEntries() {
-  const data = await AsyncStorage.getItem(ENTRIES_KEY);
-  if (!data) return [];
   try {
-    const arr = JSON.parse(decrypt(data));
-    return arr;
-  } catch {
+    const data = await AsyncStorage.getItem(ENTRIES_KEY);
+    if (!data) return [];
+    const decrypted = decrypt(data);
+    if (!decrypted) return [];
+    return JSON.parse(decrypted);
+  } catch (error) {
+    console.error('Error getting all entries:', error);
     return [];
   }
 }
 
 export async function saveAllEntries(entries) {
-  const cipher = encrypt(JSON.stringify(entries));
-  await AsyncStorage.setItem(ENTRIES_KEY, cipher);
+  try {
+    if (!Array.isArray(entries)) {
+      console.warn('Attempted to save non-array entries');
+      return false;
+    }
+    const cipher = encrypt(JSON.stringify(entries));
+    await AsyncStorage.setItem(ENTRIES_KEY, cipher);
+    return true;
+  } catch (error) {
+    console.error('Error saving all entries:', error);
+    return false;
+  }
 }
 
 export async function addEntry(entry) {
-  const entries = await getAllEntries();
-  entries.push(entry);
-  await saveAllEntries(entries);
+  try {
+    if (!entry) {
+      console.warn('Attempted to add empty entry');
+      return false;
+    }
+    const entries = await getAllEntries();
+    entries.push(entry);
+    return await saveAllEntries(entries);
+  } catch (error) {
+    console.error('Error adding entry:', error);
+    return false;
+  }
 }
 
 export async function updateEntry(updated) {
-  const entries = await getAllEntries();
-  const idx = entries.findIndex(e => e.id === updated.id);
-  if (idx !== -1) {
+  try {
+    if (!updated || !updated.id) {
+      console.warn('Attempted to update invalid entry');
+      return false;
+    }
+    const entries = await getAllEntries();
+    const idx = entries.findIndex(e => e.id === updated.id);
+    if (idx === -1) {
+      console.warn('Entry not found for update');
+      return false;
+    }
     entries[idx] = updated;
-    await saveAllEntries(entries);
+    return await saveAllEntries(entries);
+  } catch (error) {
+    console.error('Error updating entry:', error);
+    return false;
   }
 }
 
 export async function deleteEntry(id) {
-  const entries = (await getAllEntries()).filter(e => e.id !== id);
-  await saveAllEntries(entries);
+  try {
+    if (!id) {
+      console.warn('Attempted to delete entry with no ID');
+      return false;
+    }
+    const entries = (await getAllEntries()).filter(e => e.id !== id);
+    return await saveAllEntries(entries);
+  } catch (error) {
+    console.error('Error deleting entry:', error);
+    return false;
+  }
 }
 
 export async function selfDestruct() {
   try {
-    // Clear all AsyncStorage data
     await AsyncStorage.clear();
     return true;
   } catch (error) {

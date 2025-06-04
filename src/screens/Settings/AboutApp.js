@@ -15,11 +15,11 @@ const AboutApp = () => {
   };
 
   const openWebsite = () => {
-    Linking.openURL('https://yourwebsite.com');
+    Linking.openURL('https://sukrit-prakash.github.io/my-app-policy/');
   };
 
   const openSupport = () => {
-    Linking.openURL('mailto:support@yourwebsite.com');
+    Linking.openURL('mailto:sukritprakash2020@gmail.com');
   };
 
   return (
@@ -43,16 +43,7 @@ const AboutApp = () => {
 
       {/* Links */}
       <View style={[styles.section, { backgroundColor: theme === 'dark' ? '#2a2a2a' : '#fff' }]}>
-        {/* <TouchableOpacity 
-          style={styles.linkItem}
-          onPress={openPrivacyPolicy}
-        >
-          <View style={styles.linkLeft}>
-            <MaterialCommunityIcons name="shield-account" size={24} color={theme === 'dark' ? '#fff' : '#333'} />
-            <Text style={[styles.linkText, { color: theme === 'dark' ? '#fff' : '#333' }]}>Privacy Policy</Text>
-          </View>
-          <Text style={styles.linkArrow}>›</Text>
-        </TouchableOpacity> */}
+       
 
         <TouchableOpacity 
           style={styles.linkItem}

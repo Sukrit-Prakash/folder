@@ -3,25 +3,12 @@ import { View, FlatList, TextInput, StyleSheet, TouchableOpacity, Alert, Text, S
 import { getAllEntries } from '../../storage/vault';
 import EntryCard from '../../components/EntryCard';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { generateHTML } from '../../utils/exportToHTML';
-import RNPrint from 'react-native-print';
 import { ThemeContext } from '../../context/ThemeContext';
 
 export default function NoteListScreen({ navigation }) {
   const { theme, colors, toggle } = useContext(ThemeContext);
   const [entries, setEntries] = useState([]);
   const [query, setQuery] = useState('');
-
-  const handleExport = async () => {
-    try {
-      const all = (await getAllEntries()).filter(e => e.type === 'note');
-      const html = generateHTML('notes', all);
-      await RNPrint.print({ html });
-    } catch (err) {
-      console.error('Print failed:', err);
-      Alert.alert('Error', 'Failed to print. Please try again.');
-    }
-  };
 
   const handleShare = async () => {
     try {
@@ -103,13 +90,6 @@ export default function NoteListScreen({ navigation }) {
           >
             <MaterialCommunityIcons name="share-variant" size={20} color={colors.text} />
             <Text style={[styles.exportText, { color: colors.text }]}>Share</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.exportButton, { backgroundColor: colors.card, marginLeft: 8 }]} 
-            onPress={handleExport}
-          >
-            <MaterialCommunityIcons name="printer" size={20} color={colors.text} />
-            <Text style={[styles.exportText, { color: colors.text }]}>Print</Text>
           </TouchableOpacity>
         </View>
 
